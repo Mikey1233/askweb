@@ -1,44 +1,53 @@
-import ChatWrapper from "@/components/ChatWrapper"
-import { ragChat } from "@/lib/rag-chat"
-import { redis } from "@/lib/redis"
-import { cookies } from "next/headers"
+import ChatWrapper from "@/components/ChatWrapper";
+import { ragChat } from "@/lib/rag-chat";
+import { redis } from "@/lib/redis";
+import { cookies } from "next/headers";
 
 interface PageProps {
-    params : {
-        url : string | string[] | undefined
-    }
+  // params: {
+  //   url: string | string[] | undefined;
+  // };
+  params: { url: string[] }
 }
 
-const reconstructUrl = ({url}:{url :string[]}) => {
-const decodedComponents = url.map((comp)=> {
- return decodeURIComponent(comp)
-})
+const reconstructUrl = ({ url }: { url: string[] }) => {
+  const decodedComponents = url.map((comp) => {
+    return decodeURIComponent(comp);
+  });
 
-return decodedComponents.join("/") 
-}
- const Page = async(props : PageProps) => {
-const sessionCookie = (await cookies()).get("sessionId")?.value
+  return decodedComponents.join("/");
+};
 
-  const { params } = await props
+
+const Page = async ({params}: PageProps) => {
+  const sessionCookie = (await cookies()).get("sessionId")?.value;
+
+  // const { params } = await props;
   // console.log(params)
-  const reconstructedUrl = reconstructUrl({url : params.url as string[]})
-  const isAlreadyIndexed = await redis.sismember("indexed-urls",reconstructedUrl)
+  const reconstructedUrl = reconstructUrl({ url: params.url as string[] ?? []});
+  const isAlreadyIndexed = await redis.sismember(
+    "indexed-urls",
+    reconstructedUrl
+  );
 
-   const sessionId = (reconstructUrl + "--" + sessionCookie).replace(/\//g,"")
+  const sessionId = (reconstructUrl + "--" + sessionCookie).replace(/\//g, "");
 
-   const initialMessages = await ragChat.history.getMessages({amount : 10,sessionId})
-   if(!isAlreadyIndexed) {
+  const initialMessages = await ragChat.history.getMessages({
+    amount: 10,
+    sessionId,
+  });
+  if (!isAlreadyIndexed) {
     await ragChat.context.add({
-      type : "html",
+      type: "html",
       source: reconstructedUrl,
-      config : {chunkOverlap : 50,chunkSize : 200},
-    })
-   }
-   
-   await redis.sadd("indexed-urls",reconstructedUrl)
-  return (
-    <ChatWrapper sessionId={sessionId} initialMessages={initialMessages}/>
-  )
-}
+      config: { chunkOverlap: 50, chunkSize: 200 },
+    });
+  }
 
-export default Page
+  await redis.sadd("indexed-urls", reconstructedUrl);
+  return (
+    <ChatWrapper sessionId={sessionId} initialMessages={initialMessages} />
+  );
+};
+
+export default Page;
