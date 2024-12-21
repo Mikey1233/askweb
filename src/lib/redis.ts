@@ -1,13 +1,8 @@
-// import {Redis} from "@upstash/redis"
-
-// export const redis = Redis.fromEnv()
-
 import { Redis } from '@upstash/redis'
+import dotenv from 'dotenv'
+dotenv.config()
 
 export const redis = new Redis({
-  url: 'https://gusc1-coherent-adder-30283.upstash.io',
-  token: 'AXZLASQgYzIzMjQzZjQtNjI2NC00ZThiLTg5NWUtODBlOGFjYWNmZTFkMmI1ZjhlOTdiYmM2NDhmOWIxMDU0OWE2ZTIyMTQyMTY=',
+  url: process.env.UPSTASH_REDIS_REST_URL,
+  token: process.env.UPSTASH_REDIS_REST_TOKEN,
 })
-
-// await redis.set('foo', 'bar');
-// const data = await redis.get('foo');
