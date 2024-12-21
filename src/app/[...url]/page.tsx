@@ -3,13 +3,6 @@ import { ragChat } from "@/lib/rag-chat";
 import { redis } from "@/lib/redis";
 import { cookies } from "next/headers";
 
-interface PageProps {
-  // params: {
-  //   url: string | string[] | undefined;
-  // };
-  params: { url: string[] }
-}
-
 const reconstructUrl = ({ url }: { url: string[] }) => {
   const decodedComponents = url.map((comp) => {
     return decodeURIComponent(comp);
@@ -19,12 +12,13 @@ const reconstructUrl = ({ url }: { url: string[] }) => {
 };
 
 
-const Page = async ({params}: PageProps) => {
+const Page = async ({params}: {params : Promise<{ url: string[] }>}) => {
+  const res = (await params).url
   const sessionCookie = (await cookies()).get("sessionId")?.value;
 
   // const { params } = await props;
   // console.log(params)
-  const reconstructedUrl = reconstructUrl({ url: params.url as string[] ?? []});
+  const reconstructedUrl = reconstructUrl({ url: res as string[] ?? []});
   const isAlreadyIndexed = await redis.sismember(
     "indexed-urls",
     reconstructedUrl
